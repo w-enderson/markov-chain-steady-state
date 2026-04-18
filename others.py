@@ -4,7 +4,7 @@ from linear_algebra import build_steady_state_system, qr_decomposition, solver_q
 
 import networkx as nx
 
-def simulate_trajectory(P, pi0, size):
+def simulate_trajectory(P: np.ndarray, pi0: np.ndarray, size: int)-> np.ndarray:
     """
     Simula uma trajetória de tamanho "size" onde o estado inicial é escolhido
     baseado em uma distribuição de probabilidade inicial pi0.
@@ -22,29 +22,39 @@ def simulate_trajectory(P, pi0, size):
         
     return trajectory
 
-def diagnose_with_graphs(P):
-    # Grafo
+def diagnose_with_graphs(P: np.ndarray) -> tuple[bool, bool, int]:
+    """
+    Verifica se a cadeia de markov é aperiódica e irredutível e
+    o número de classes comunicantes
+
+    por meio da matriz de transição P
+
+    Args:
+    - P : matriz de transição nxn
+
+    return:
+        (is_irreducible, is_aperiodic, n_componentes)
+    """
+    
+    # Grafo associado a P
     G = nx.from_numpy_array(P, create_using=nx.DiGraph)
         
     # Irredutibilidade (Fortemente Conexo)
     is_irreducible = nx.is_strongly_connected(G)
-    print(f"Irredutível: {is_irreducible}")
     
     # Aperiodicidade
     # Um grafo é aperiódico se o MDC dos comprimentos de todos os ciclos é 1
     if is_irreducible:
         is_aperiodic = nx.is_aperiodic(G)
-        print(f"Aperiódica: {is_aperiodic}")
     else:
         # Se não for irredutível, a aperiodicidade deve ser checada por componente
         is_aperiodic = all(nx.is_aperiodic(G.subgraph(c)) 
                           for c in nx.strongly_connected_components(G))
-        print(f"Aperiódica: {is_aperiodic}")
 
     # Análise de Componentes
     scc = list(nx.strongly_connected_components(G))
-    print(f"Número de classes comunicantes: {len(scc)}")
 
+    return is_irreducible, is_aperiodic, scc
 
 if __name__ == "__main__":
     n= 4
