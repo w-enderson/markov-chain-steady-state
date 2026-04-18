@@ -64,6 +64,14 @@ def qr_decomposition(A : np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     return Q, R
 
+def solver_qr(Q: np.ndarray, R: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """
+    Resolve o sistema Ax = b usando os componentes Q e R.
+    """
+    
+    y = Q.T @ b
+
+    return np.linalg.solve(R, y)
 
 if __name__ == "__main__":
     P= generate_transition_matrix(dim=3, alpha=3)
@@ -75,3 +83,5 @@ if __name__ == "__main__":
     Q, R = qr_decomposition(A)
     print(Q)
     print(R)
+
+    print(solver_qr(Q,R,b))
