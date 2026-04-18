@@ -42,16 +42,16 @@ def generate_transition_matrix(dim: int, alpha: float=1.0) -> np.ndarray:
 
 if __name__ == "__main__":
     # muito esparso (0.001 - 0.1)
-    print(generate_transition_matrix(3, 0.1))
+    print(generate_transition_matrix(dim=3, alpha=0.1))
 
     # esparsa (0.1 - 0.9)
-    print(generate_transition_matrix(3, 0.7))
+    print(generate_transition_matrix(dim=3, alpha=0.7))
 
     # uniforme (1)
-    print(generate_transition_matrix(3, 1))
+    print(generate_transition_matrix(dim=3, alpha=1))
 
     # concentrada (1.1 - 10)
-    print(generate_transition_matrix(3, 7))
+    print(generate_transition_matrix(dim=3, alpha=7))
     
     # valores próximos da média (>50)
-    print(generate_transition_matrix(3, 60))
+    print(generate_transition_matrix(dim=3, alpha=60))
