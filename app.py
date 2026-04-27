@@ -54,11 +54,9 @@ div[data-testid="stNumberInput"] input {
 }
 
 .section-label {
-    font-family: 'Space Mono', monospace;
     font-size: 0.7rem;
     color: #5555aa;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
     margin-bottom: 0.3rem;
 }
 
@@ -154,8 +152,8 @@ def draw_markov_graph(
     fig, ax = plt.subplots(figsize=(7, 5.5))
     _mpl_style(fig, ax)
 
-    pos = (nx.circular_layout(G) if n <= 6
-           else nx.spring_layout(G, seed=42, k=1.5))
+    pos = (nx.circular_layout(G) if n <= 20
+           else nx.spring_layout(G, seed=42, k=2))
 
     # Cores dos nós: intensidade proporcional à dist (se fornecida)
     if highlight_dist is not None:
@@ -182,11 +180,12 @@ def draw_markov_graph(
     nx.draw_networkx_edges(G, pos, ax=ax,
                            edge_color="#7f7fff", width=edge_widths, alpha=0.75,
                            arrows=True, arrowsize=20,
-                           connectionstyle="arc3,rad=0.15",
+                           connectionstyle="arc3,rad=0.2",
                            min_source_margin=25, min_target_margin=25)
     nx.draw_networkx_edge_labels(G, pos, ax=ax, edge_labels=edge_labels,
                                  font_color="#c0c0ff", font_size=8,
                                  font_family="monospace",
+                                 label_pos=0.4,
                                  bbox=dict(boxstyle="round,pad=0.2",
                                            fc="#0f0f13", ec="none", alpha=0.7))
     ax.axis("off")
@@ -268,7 +267,7 @@ with left:
 
     # ── Número de estados ──────────────────────────────────────────────────
     n_input = st.number_input(
-        "Número de estados", min_value=2, max_value=20,
+        "Número de estados", min_value=2, max_value=100,
         value=st.session_state.n_states, step=1,
     )
     if n_input != st.session_state.n_states:
