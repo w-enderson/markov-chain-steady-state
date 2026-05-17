@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.linalg as la
 
 from markov_generators import generate_transition_matrix
 
@@ -48,8 +49,9 @@ def qr_decomposition(A : np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         e1 = np.zeros_like(x)
         e1[0] = np.linalg.norm(x)
 
-        v = x + np.sign(x[0]) * e1
-
+        sign = np.sign(x[0]) if x[0] != 0 else 1.0
+        v = x + sign * e1
+        
         if np.linalg.norm(v) < 1e-15:
             continue
         
@@ -71,7 +73,7 @@ def solver_qr(Q: np.ndarray, R: np.ndarray, b: np.ndarray) -> np.ndarray:
     
     y = Q.T @ b
 
-    return np.linalg.solve(R, y)
+    return la.solve_triangular(R, y)
 
 if __name__ == "__main__":
     P= generate_transition_matrix(dim=3, alpha=3)
