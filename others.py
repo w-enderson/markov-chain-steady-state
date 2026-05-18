@@ -3,11 +3,13 @@ from linear_algebra import build_steady_state_system, qr_decomposition, solver_q
 
 import networkx as nx
 
+
 def simulate_trajectory(P: np.ndarray, pi0: np.ndarray, size: int)-> np.ndarray:
     """
     Simula uma trajetória de tamanho "size" onde o estado inicial é escolhido
-    baseado em uma distribuição de probabilidade inicial pi0.
+    baseado em uma distribuição de probabilidade inicial pi_0.
     """
+
     n = P.shape[0]
 
     current_state = np.random.choice(n, p=pi0)
@@ -63,21 +65,30 @@ def normalize_rows(matrix: np.ndarray) -> np.ndarray:
     """
     row_sums = matrix.sum(axis=1, keepdims=True)
     n = matrix.shape[0]
+
     # Linhas zeradas viram uniformes
     zero_rows = (row_sums.flatten() == 0)
     row_sums[zero_rows] = 1.0
+
     normalized = matrix / row_sums
+
     for i in np.where(zero_rows)[0]:
         normalized[i] = 1.0 / n
+
     return normalized
 
 
 def normalize_vector(v: np.ndarray) -> np.ndarray:
-    """Normaliza vetor de probabilidade; se nulo, retorna uniforme."""
+    """
+    Normaliza vetor de probabilidade; se nulo, retorna uniforme.
+    """
+    
     v = np.clip(v, 0, None)
     s = v.sum()
+
     if s == 0:
         return np.ones(len(v)) / len(v)
+    
     return v / s
 
 
@@ -89,12 +100,15 @@ def get_stationary_distribution(P: np.ndarray) -> np.ndarray | None:
 
     Retorna None se o sistema não tiver solução única.
     """
+
     try:
         A, b = build_steady_state_system(P)
+
         Q, R = qr_decomposition(A)
+
         pi = solver_qr(Q, R, b)
-        pi = np.abs(pi)
-        pi /= pi.sum()
+
         return pi
+        
     except Exception:
         return None
