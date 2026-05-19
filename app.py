@@ -6,7 +6,7 @@ import networkx as nx
 
 from markov_generators  import generate_transition_matrix, generate_probability_vector
 from others             import simulate_trajectory, diagnose_with_graphs, normalize_rows, normalize_vector, get_stationary_distribution
-from markov_animations  import create_distribution_animation, create_trajectory_animation, create_step_animation
+from markov_animations  import create_distribution_animation, create_step_animation
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -195,7 +195,6 @@ def _init(n: int):
         sim_traj       = None,
         anim_dist_fig  = None,
         anim_traj_fig  = None,
-        anim_step_fig  = None,  # NOVA VARIÁVEL AQUI
     )
 
 if "n_states" not in st.session_state:
@@ -205,9 +204,7 @@ if "n_states" not in st.session_state:
 # ══════════════════════════════════════════════════════════════════════════════
 # Cabeçalho
 # ══════════════════════════════════════════════════════════════════════════════
-st.markdown("## Cadeia de Markov")
-st.markdown('<p class="lbl">simulador de processos estocásticos</p>',
-            unsafe_allow_html=True)
+st.markdown("## Simulador de Cadeia de Markov")
 st.divider()
 
 left, right = st.columns([1, 1.85], gap="large")
@@ -217,9 +214,9 @@ left, right = st.columns([1, 1.85], gap="large")
 # PAINEL ESQUERDO
 # ══════════════════════════════════════════════════════════════════════════════
 with left:
-    st.markdown('<p class="lbl">configuração</p>', unsafe_allow_html=True)
+    st.markdown('<p class="lbl">Número de estados</p>', unsafe_allow_html=True)
 
-    n_input = st.number_input("Número de estados", min_value=2, max_value=10,
+    n_input = st.number_input("",min_value=2, max_value=30,
                               value=st.session_state.n_states, step=1)
     if int(n_input) != st.session_state.n_states:
         _init(int(n_input))
@@ -228,32 +225,22 @@ with left:
     n           = st.session_state.n_states
     state_names = st.session_state.state_names
 
-    # Nomes dos estados
-    st.markdown('<p class="lbl">nomes dos estados</p>', unsafe_allow_html=True)
-    for i, col in enumerate(st.columns(n)):
-        with col:
-            state_names[i] = st.text_input(
-                "", value=state_names[i], key=f"sn_{i}",
-                label_visibility="collapsed", max_chars=4,
-            )
-
     # Geração aleatória
-    with st.expander("Gerar aleatoriamente"):
-        alpha = st.slider("Alpha (Dirichlet)", 0.1, 10.0, 1.0, 0.1,
-                          help="α<1 esparsa · α=1 uniforme · α>1 concentrada")
-        if st.button("Nova matriz + vetor"):
-            st.session_state.matrix    = generate_transition_matrix(n, alpha)
-            st.session_state.init_dist = generate_probability_vector(n, alpha)
-            st.session_state.sim_dist  = None
-            st.session_state.sim_traj  = None
-            st.session_state.anim_dist_fig = None
-            st.session_state.anim_traj_fig = None
-            st.session_state.anim_step_fig = None
-            st.rerun()
+    st.markdown('<p class="lbl">Gerar aleatoriamente</p>', unsafe_allow_html=True)
+
+    alpha = st.slider("Alpha (Dirichlet)", 0.1, 10.0, 1.0, 0.1,
+                        help="α<1 esparsa · α=1 uniforme · α>1 concentrada")
+    if st.button("Nova matriz + vetor"):
+        st.session_state.matrix    = generate_transition_matrix(n, alpha)
+        st.session_state.init_dist = generate_probability_vector(n, alpha)
+        st.session_state.sim_dist  = None
+        st.session_state.sim_traj  = None
+        st.session_state.anim_dist_fig = None
+        st.session_state.anim_traj_fig = None
+        st.rerun()
 
     # Matriz de transição
     st.markdown('<p class="lbl">matriz de transição n × n</p>', unsafe_allow_html=True)
-    st.caption("Linhas normalizadas automaticamente para somar 1.")
     mat_df = pd.DataFrame(st.session_state.matrix,
                           index=state_names, columns=state_names)
     edited = st.data_editor(mat_df, key="mat_ed",
@@ -282,16 +269,12 @@ with left:
 
     # Parâmetros
     st.markdown('<p class="lbl">parâmetros</p>', unsafe_allow_html=True)
-    n_steps    = st.slider("Passos de distribuição",    5,  150,  30)
-    traj_size  = st.slider("Tamanho da trajetória",   100, 20000, 5000, 100)
-    anim_steps = st.slider("Passos a animar (traj.)",  20,  300,  100)
-    
-    # NOVOS PARÂMETROS PARA A ANIMAÇÃO PASSO A PASSO
-    anim_steps_detalhe = st.slider("Passos a animar (detalhe)", 5, 50, 20) 
-    
-    spd_dist   = st.slider("Velocidade evolução (ms)",  100, 1500, 650, 50)
-    spd_traj   = st.slider("Velocidade trajetória (ms)", 50, 1000, 350, 50)
-    spd_step   = st.slider("Velocidade detalhe (ms)", 200, 2000, 800, 100) # NOVO
+    n_steps    = st.slider("Passos de distribuição",  5,   150,  30)
+    traj_size  = st.slider("Tamanho da trajetória", 100, 20000, 5000, 100)
+    anim_steps = st.slider("Passos a animar",         20,  300,  100)
+
+    spd_dist = 650
+    spd_traj = 800
 
     if st.button("▶  Simular"):
         # Evolução de π(t) — distribuição
@@ -302,22 +285,19 @@ with left:
             dist_acc.append(d.copy())
         st.session_state.sim_dist = dist_acc
 
-        # Trajetória estocástica via others.py
+        # Trajetória estocástica
         traj = simulate_trajectory(P, pi0, traj_size)
         st.session_state.sim_traj = traj
 
-        # Figuras animadas via markov_animations.py
+        # Animação da evolução de π(t)
         st.session_state.anim_dist_fig = create_distribution_animation(
             P, state_names, dist_acc, frame_duration=spd_dist,
         )
-        st.session_state.anim_traj_fig = create_trajectory_animation(
-            P, state_names, traj,
-            max_steps=anim_steps, frame_duration=spd_traj,
-        )
-        # NOVA ANIMAÇÃO AQUI
-        st.session_state.anim_step_fig = create_step_animation(
-            P, state_names, traj[:anim_steps_detalhe], 
-            frame_duration=spd_step
+
+        # Animação de trajetória — usa create_step_animation
+        st.session_state.anim_traj_fig = create_step_animation(
+            P, state_names, traj[:anim_steps],
+            frame_duration=spd_traj,
         )
 
 
@@ -325,12 +305,10 @@ with left:
 # PAINEL DIREITO
 # ══════════════════════════════════════════════════════════════════════════════
 with right:
-    tab_graph, tab_anim_dist, tab_anim_traj, tab_step, tab_diag = st.tabs([
+    tab_graph, tab_anim_dist, tab_anim_traj = st.tabs([
         "Grafo",
         "Evolução de π(t)",
         "Trajetória",
-        "Passo a Passo",
-        "Diagnóstico",
     ])
 
     # ── Aba 1: grafo estático ─────────────────────────────────────────────
@@ -339,97 +317,7 @@ with right:
         fig_g = draw_static_graph(P, state_names)
         st.pyplot(fig_g, use_container_width=True)
         plt.close(fig_g)
-        with st.expander("Matriz normalizada"):
-            st.dataframe(
-                pd.DataFrame(P, index=state_names, columns=state_names)
-                .style.format("{:.4f}").background_gradient(cmap="Blues"),
-                use_container_width=True,
-            )
-
-    # ── Aba 2: animação da distribuição ───────────────────────────────────
-    with tab_anim_dist:
-        if st.session_state.anim_dist_fig is None:
-            st.info("Clique em **▶ Simular** para gerar a animação.")
-            st.markdown(
-                '<p class="hint">Mostra como π(t) evolui passo a passo — '
-                'nós do grafo crescem/colorem conforme a probabilidade aumenta. '
-                'Use ▶ Play ou arraste o slider.</p>',
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown('<p class="lbl">evolução de π(t) — grafo + barras</p>',
-                        unsafe_allow_html=True)
-            st.plotly_chart(st.session_state.anim_dist_fig,
-                            use_container_width=True, key="fig_dist")
-
-            st.markdown('<p class="lbl">série temporal completa</p>',
-                        unsafe_allow_html=True)
-            df_evo = pd.DataFrame(st.session_state.sim_dist, columns=state_names)
-            df_evo.index.name = "Passo"
-            st.line_chart(df_evo, use_container_width=True, height=190)
-
-            with st.expander("Tabela completa"):
-                st.dataframe(
-                    df_evo.style.format("{:.5f}")
-                    .background_gradient(cmap="Blues", axis=0),
-                    use_container_width=True,
-                )
-
-    # ── Aba 3: animação da trajetória ─────────────────────────────────────
-    with tab_anim_traj:
-        if st.session_state.anim_traj_fig is None:
-            st.info("Clique em **▶ Simular** para gerar a animação.")
-            st.markdown(
-                '<p class="hint">Percorre a cadeia passo a passo — '
-                'nó atual em destaque branco, trilha dos últimos nós visitados '
-                'em roxo desbotado. O gráfico de barras mostra a frequência '
-                'acumulada de visitas.</p>',
-                unsafe_allow_html=True,
-            )
-        else:
-            traj = st.session_state.sim_traj
-            st.markdown('<p class="lbl">caminhada aleatória animada</p>',
-                        unsafe_allow_html=True)
-            st.plotly_chart(st.session_state.anim_traj_fig,
-                            use_container_width=True, key="fig_traj")
-
-            # Empírica vs estacionária
-            st.markdown('<p class="lbl">empírica vs estacionária teórica</p>',
-                        unsafe_allow_html=True)
-            counts   = np.bincount(traj, minlength=n)
-            emp_dist = counts / len(traj)
-            pi_stat  = get_stationary_distribution(P)
-
-            if pi_stat is not None:
-                cmp_df = pd.DataFrame(
-                    {"Empírica": emp_dist, "Estacionária (QR)": pi_stat},
-                    index=state_names,
-                )
-                st.bar_chart(cmp_df, use_container_width=True, height=200)
-            else:
-                fig_e = draw_bar(emp_dist, state_names,
-                                 title=f"Empírica ({len(traj)} passos)")
-                st.pyplot(fig_e, use_container_width=True)
-                plt.close(fig_e)
-
-    # ── Aba 4: animação detalhada passo a passo ────────────────────────
-    with tab_step:
-        if st.session_state.anim_step_fig is None:
-            st.info("Clique em **▶ Simular** para gerar a animação.")
-            st.markdown(
-                '<p class="hint">Animação detalhada focada na transição entre estados. '
-                'O grafo destaca a transição atual com uma seta iluminada, enquanto a fita '
-                'lateral mostra o histórico recente.</p>',
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown('<p class="lbl">transição estado a estado</p>',
-                        unsafe_allow_html=True)
-            st.plotly_chart(st.session_state.anim_step_fig,
-                            use_container_width=True, key="fig_step")
-
-    # ── Aba 5: diagnóstico ────────────────────────────────────────────────
-    with tab_diag:
+        
         st.markdown('<p class="lbl">propriedades da cadeia</p>',
                     unsafe_allow_html=True)
 
@@ -474,17 +362,72 @@ with right:
 
         if pi_stat is not None:
             st.markdown(
-                '<p class="lbl">distribuição estacionária π (decomposição QR)</p>',
+                '<p class="lbl">distribuição estacionária </p>',
                 unsafe_allow_html=True)
             pi_df = pd.DataFrame(pi_stat.reshape(1, -1), columns=state_names)
-            st.dataframe(
-                pi_df.style.format("{:.6f}").background_gradient(cmap="Purples"),
-                use_container_width=True,
-            )
+
             fig_pi = draw_bar(pi_stat, state_names, title="π estacionária")
             st.pyplot(fig_pi, use_container_width=True)
             plt.close(fig_pi)
             residual = np.max(np.abs(pi_stat @ P - pi_stat))
-            st.caption(f"Verificação  ‖π P − π‖∞ = {residual:.2e}")
+            st.caption(f"Verificação  ‖π P - π‖  ͚   = {residual:.2e}")
         else:
             st.warning("Não foi possível calcular a distribuição estacionária.")
+
+    # ── Aba 2: animação da distribuição ───────────────────────────────────
+    with tab_anim_dist:
+        if st.session_state.anim_dist_fig is None:
+            st.info("Clique em **▶ Simular** para gerar a animação.")
+            st.markdown(
+                '<p class="hint">Mostra como π(t) evolui passo a passo — '
+                'nós do grafo crescem/colorem conforme a probabilidade aumenta. '
+                'Use ▶ Play ou arraste o slider.</p>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown('<p class="lbl">evolução de π(t)</p>',
+                        unsafe_allow_html=True)
+            st.plotly_chart(st.session_state.anim_dist_fig,
+                            use_container_width=True, key="fig_dist")
+
+            st.markdown('<p class="lbl">evolução de π com o tempo</p>',
+                        unsafe_allow_html=True)
+            df_evo = pd.DataFrame(st.session_state.sim_dist, columns=state_names)
+            df_evo.index.name = "Passo"
+            st.line_chart(df_evo, use_container_width=True, height=190)
+
+    # ── Aba 3: animação da trajetória (passo a passo) ─────────────────────
+    with tab_anim_traj:
+        if st.session_state.anim_traj_fig is None:
+            st.info("Clique em **▶ Simular** para gerar a animação.")
+            st.markdown(
+                '<p class="hint">Percorre a cadeia estado a estado — '
+                'a seta iluminada destaca a transição atual no grafo, '
+                'enquanto a fita lateral mostra o histórico recente de estados visitados.</p>',
+                unsafe_allow_html=True,
+            )
+        else:
+            traj = st.session_state.sim_traj
+            st.markdown('<p class="lbl">transição estado a estado</p>',
+                        unsafe_allow_html=True)
+            st.plotly_chart(st.session_state.anim_traj_fig,
+                            use_container_width=True, key="fig_traj")
+
+            # Empírica vs estacionária
+            st.markdown('<p class="lbl">empírica vs teórica</p>',
+                        unsafe_allow_html=True)
+            counts   = np.bincount(traj, minlength=n)
+            emp_dist = counts / len(traj)
+            pi_stat  = get_stationary_distribution(P)
+
+            if pi_stat is not None:
+                cmp_df = pd.DataFrame(
+                    {"Empírica": emp_dist, "Estacionária (QR)": pi_stat},
+                    index=state_names,
+                )
+                st.bar_chart(cmp_df, use_container_width=True, height=200, stack=False)
+            else:
+                fig_e = draw_bar(emp_dist, state_names,
+                                 title=f"Empírica ({len(traj)} passos)")
+                st.pyplot(fig_e, use_container_width=True)
+                plt.close(fig_e)
