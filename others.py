@@ -112,3 +112,59 @@ def get_stationary_distribution(P: np.ndarray) -> np.ndarray | None:
         
     except Exception:
         return None
+
+def resize_chain(
+    P: np.ndarray,
+    pi0: np.ndarray,
+    new_n: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Redimensiona P (nxn) e pi0 (n,) para new_n estados, preservando
+    a estrutura existente o máximo possível.
+
+    Encolher (new_n < old_n)
+        Remove as últimas linhas e colunas (último estado) e re-normaliza
+        as linhas para que cada uma some 1.
+
+    Crescer (new_n > old_n)
+        Embute a matriz antiga no bloco superior-esquerdo.
+        Cada linha existente recebe uma semente uniforme pequena (1/new_n)
+        para os novos estados — preservando os pesos relativos entre os
+        estados antigos após a re-normalização.
+        As novas linhas partem de uma distribuição uniforme.
+        pi0 é estendido com a média dos pesos existentes e re-normalizado.
+
+    """
+    old_n = P.shape[0]
+    if new_n == old_n:
+        return P.copy(), pi0.copy()
+
+    if new_n < old_n:
+        P_new   = P[:new_n, :new_n].copy()
+        pi0_new = pi0[:new_n].copy()
+
+    else:
+        P_new = np.zeros((new_n, new_n))
+        # Copia bloco antigo
+        P_new[:old_n, :old_n] = P
+        # Semente pequena para novos estados nas linhas existentes
+        P_new[:old_n, old_n:] = 1.0 / new_n
+        # Novas linhas: uniforme
+        P_new[old_n:, :] = 1.0 / new_n
+        # Estende pi0
+        pi0_new = np.zeros(new_n)
+        pi0_new[:old_n] = pi0
+        pi0_new[old_n:] = float(pi0.mean())
+
+
+    return P_new, pi0_new
+
+
+def resize_state_names(names: list[str], new_n: int) -> list[str]:
+    """
+    Mantém os nomes existentes ao encolher; acrescenta S{i} ao crescer.
+    """
+    old_n = len(names)
+    if new_n <= old_n:
+        return names[:new_n]
+    return names + [f"S{i}" for i in range(old_n, new_n)]

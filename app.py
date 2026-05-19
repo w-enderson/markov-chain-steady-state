@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from markov_generators  import generate_transition_matrix, generate_probability_vector
-from others             import simulate_trajectory, diagnose_with_graphs, normalize_rows, normalize_vector, get_stationary_distribution
+from others             import simulate_trajectory, diagnose_with_graphs, normalize_rows, normalize_vector, get_stationary_distribution, resize_chain, resize_state_names
 from markov_animations  import create_distribution_animation, create_step_animation
 
 
@@ -216,10 +216,33 @@ left, right = st.columns([1, 1.85], gap="large")
 with left:
     st.markdown('<p class="lbl">Número de estados</p>', unsafe_allow_html=True)
 
-    n_input = st.number_input("",min_value=2, max_value=30,
+    n_input = st.number_input("", min_value=2, max_value=30,
                               value=st.session_state.n_states, step=1)
+    
     if int(n_input) != st.session_state.n_states:
-        _init(int(n_input))
+        new_n = int(n_input)
+        
+        # Chama a função de redimensionamento passando a matriz e vetor atuais
+        P_new, pi0_new = resize_chain(
+            st.session_state.matrix, 
+            st.session_state.init_dist, 
+            new_n
+        )
+        
+        # Redimensiona os nomes dos estados
+        names_new = resize_state_names(st.session_state.state_names, new_n)
+        
+        # Atualiza o session_state preservando o estado existente formatado
+        st.session_state.update(
+            n_states=new_n,
+            matrix=P_new,
+            init_dist=pi0_new,
+            state_names=names_new,
+            sim_dist=None,
+            sim_traj=None,
+            anim_dist_fig=None,
+            anim_traj_fig=None
+        )
         st.rerun()
 
     n           = st.session_state.n_states
@@ -390,7 +413,7 @@ with right:
             st.plotly_chart(st.session_state.anim_dist_fig,
                             use_container_width=True, key="fig_dist")
 
-            st.markdown('<p class="lbl">evolução de π com o tempo</p>',
+            st.markdown('<p class="lbl">evolução de π ao longo do tempo</p>',
                         unsafe_allow_html=True)
             df_evo = pd.DataFrame(st.session_state.sim_dist, columns=state_names)
             df_evo.index.name = "Passo"
