@@ -120,20 +120,15 @@ def resize_chain(
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Redimensiona P (nxn) e pi0 (n,) para new_n estados, preservando
-    a estrutura existente o máximo possível.
+    a estrutura existente.
 
-    Encolher (new_n < old_n)
-        Remove as últimas linhas e colunas (último estado) e re-normaliza
-        as linhas para que cada uma some 1.
+    Encolher (new_n < old_n):
+        Remove as últimas linhas e colunas (últimos estados).
 
-    Crescer (new_n > old_n)
+    Crescer (new_n > old_n):
         Embute a matriz antiga no bloco superior-esquerdo.
-        Cada linha existente recebe uma semente uniforme pequena (1/new_n)
-        para os novos estados — preservando os pesos relativos entre os
-        estados antigos após a re-normalização.
-        As novas linhas partem de uma distribuição uniforme.
-        pi0 é estendido com a média dos pesos existentes e re-normalizado.
-
+        As novas linhas e colunas em P são inicializadas com zeros.
+        O vetor pi0 é estendido com zeros para os novos estados.
     """
     old_n = P.shape[0]
     if new_n == old_n:
@@ -145,17 +140,10 @@ def resize_chain(
 
     else:
         P_new = np.zeros((new_n, new_n))
-        # Copia bloco antigo
-        P_new[:old_n, :old_n] = P
-        # Semente pequena para novos estados nas linhas existentes
-        P_new[:old_n, old_n:] = 1.0 / new_n
-        # Novas linhas: uniforme
-        P_new[old_n:, :] = 1.0 / new_n
-        # Estende pi0
         pi0_new = np.zeros(new_n)
+        
+        P_new[:old_n, :old_n] = P
         pi0_new[:old_n] = pi0
-        pi0_new[old_n:] = float(pi0.mean())
-
 
     return P_new, pi0_new
 
