@@ -124,7 +124,7 @@ def update_matrix():
             col_idx = state_names.index(col_name)
             st.session_state.matrix[int(row_idx), col_idx] = float(new_val)
 
-def draw_static_graph(P: np.ndarray, state_names: list[str]):
+def draw_static_graph(P: np.ndarray, state_names: list[str], pi_stat=None):
     n = P.shape[0]
     G = nx.DiGraph()
     G.add_nodes_from(range(n))
@@ -141,16 +141,26 @@ def draw_static_graph(P: np.ndarray, state_names: list[str]):
     weights = [G[u][v]["weight"] for u, v in G.edges()]
 
     nx.draw_networkx_nodes(G, pos, ax=ax, node_color="#2e2e52",
-                           node_size=900, linewidths=2, edgecolors="#7f7fff")
+                           node_size=1400, linewidths=2, edgecolors="#7f7fff")
+    
+    # Criando os rótulos dinamicamente com quebra de linha (\n)
+    if pi_stat is not None:
+        labels = {i: f"{state_names[i]}\n{pi_stat[i]:.2f}" for i in range(n)}
+    else:
+        labels = {i: state_names[i] for i in range(n)}
+
+    # Reduzi levemente o font_size para 9 para encaixar melhor
     nx.draw_networkx_labels(G, pos, ax=ax,
-                            labels={i: state_names[i] for i in range(n)},
+                            labels=labels,
                             font_color="#e8e8f0", font_family="monospace",
-                            font_size=10, font_weight="bold")
+                            font_size=9, font_weight="bold")
+    
     nx.draw_networkx_edges(G, pos, ax=ax, edge_color="#7f7fff",
                            width=[0.8 + 3 * w for w in weights], alpha=0.7,
                            arrows=True, arrowsize=20,
                            connectionstyle="arc3,rad=0.15",
-                           min_source_margin=25, min_target_margin=25)
+                           min_source_margin=28, min_target_margin=28) # Margens ajustadas para o node maior
+    
     nx.draw_networkx_edge_labels(G, pos, ax=ax, edge_labels=edge_labels,
                                  font_color="#c0c0ff", font_size=8,
                                  font_family="monospace",
@@ -159,7 +169,6 @@ def draw_static_graph(P: np.ndarray, state_names: list[str]):
     ax.axis("off")
     plt.tight_layout()
     return fig
-
 
 def draw_bar(values: np.ndarray, labels: list[str],
              highlight: int | None = None, title: str = ""):
@@ -362,10 +371,15 @@ with right:
         "Trajetória",
     ])
 
-    # ── Aba 1: grafo estático ─────────────────────────────────────────────
+# ── Aba 1: grafo estático ─────────────────────────────────────────────
     with tab_graph:
         st.markdown('<p class="lbl">grafo dirigido</p>', unsafe_allow_html=True)
-        fig_g = draw_static_graph(P, state_names)
+        
+        # MUDANÇA: Calcular a distribuição estacionária ANTES de desenhar o grafo
+        pi_stat = get_stationary_distribution(P)
+        
+        # Passar o pi_stat recém calculado para a função do grafo
+        fig_g = draw_static_graph(P, state_names, pi_stat)
         st.pyplot(fig_g, use_container_width=True)
         plt.close(fig_g)
         
