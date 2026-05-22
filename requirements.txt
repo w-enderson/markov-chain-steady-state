@@ -37,6 +37,7 @@ numpy==2.4.4
 packaging==26.2
 pandas==3.0.2
 pillow==12.2.0
+plotly==6.7.0
 protobuf==7.34.1
 pyarrow==24.0.0
 pycparser==3.0
@@ -52,6 +53,7 @@ requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==15.0.0
 rpds-py==0.30.0
+scipy==1.17.1
 SecretStorage==3.5.0
 SimpleWebSocketServer==0.1.2
 six==1.17.0
