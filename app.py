@@ -119,10 +119,29 @@ def _mpl_dark(fig, ax):
 def update_matrix():
     edited_data = st.session_state.mat_ed["edited_rows"]
     
+    state_names = st.session_state.state_names 
+    
     for row_idx, cols in edited_data.items():
+        i = int(row_idx)
         for col_name, new_val in cols.items():
-            col_idx = state_names.index(col_name)
-            st.session_state.matrix[int(row_idx), col_idx] = float(new_val)
+            j = state_names.index(col_name)
+            val = float(new_val)
+            
+            # 1. Atualiza a transição editada pelo usuário
+            st.session_state.matrix[i, j] = val
+            
+            if val > 0:
+                # Adiciona a transição de volta (j -> i) se ela não existir
+                if st.session_state.matrix[j, i] == 0:
+                    st.session_state.matrix[j, i] = val
+                
+                # Adiciona o loop no estado de origem (i -> i) se não existir
+                if st.session_state.matrix[i, i] == 0:
+                    st.session_state.matrix[i, i] = val
+                    
+                # Adiciona o loop no estado de destino (j -> j) se não existir
+                if st.session_state.matrix[j, j] == 0:
+                    st.session_state.matrix[j, j] = val
 
 def draw_static_graph(P: np.ndarray, state_names: list[str], pi_stat=None):
     n = P.shape[0]
