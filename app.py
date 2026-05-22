@@ -179,6 +179,34 @@ def draw_bar(values: np.ndarray, labels: list[str],
     plt.tight_layout()
     return fig
 
+def draw_bar_horizontal(values, labels, title=""):
+    # A mágica está aqui: calcula a altura dinamicamente baseada na quantidade de barras.
+    # 0.4 polegadas por estado, com uma altura mínima de 3 polegadas.
+    fig_height = max(3.0, len(labels) * 0.4)
+    
+    fig, ax = plt.subplots(figsize=(8, fig_height))
+    
+    # Cria as barras horizontais
+    bars = ax.barh(labels, values, color='#4C72B0', edgecolor='black')
+    
+    ax.set_title(title, pad=15)
+    ax.set_xlabel('Probabilidade')
+    
+    # Inverte o eixo Y para que o primeiro estado (índice 0) fique no topo do gráfico
+    ax.invert_yaxis() 
+    
+    # Adiciona os valores na ponta de cada barra para facilitar a leitura
+    for bar in bars:
+        width = bar.get_width()
+        ax.text(width, bar.get_y() + bar.get_height()/2, f' {width:.4f}', 
+                va='center', ha='left', fontsize=10)
+    
+    # Remove as bordas superior e direita para um visual mais limpo
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    fig.tight_layout()
+    return fig
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Session state
@@ -448,9 +476,23 @@ with right:
                     {"Empírica": emp_dist, "Estacionária (QR)": pi_stat},
                     index=state_names,
                 )
-                st.bar_chart(cmp_df, use_container_width=True, height=200, stack=False)
+                
+                # Calcula a altura dinamicamente: no mínimo 300px, adicionando ~40px por estado
+                dynamic_height = max(300, len(state_names) * 40)
+                
+                # O parâmetro horizontal=True deita as barras (requer Streamlit >= 1.38)
+                st.bar_chart(
+                    cmp_df, 
+                    use_container_width=True, 
+                    height=dynamic_height, 
+                    stack=False, 
+                    horizontal=True 
+                )
             else:
-                fig_e = draw_bar(emp_dist, state_names,
-                                 title=f"Empírica ({len(traj)} passos)")
+                fig_e = draw_bar_horizontal(
+                    emp_dist, 
+                    state_names,
+                    title=f"Empírica ({len(traj)} passos)"
+                )
                 st.pyplot(fig_e, use_container_width=True)
                 plt.close(fig_e)
