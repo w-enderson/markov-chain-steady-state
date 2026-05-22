@@ -149,7 +149,6 @@ def draw_static_graph(P: np.ndarray, state_names: list[str], pi_stat=None):
     else:
         labels = {i: state_names[i] for i in range(n)}
 
-    # Reduzi levemente o font_size para 9 para encaixar melhor
     nx.draw_networkx_labels(G, pos, ax=ax,
                             labels=labels,
                             font_color="#e8e8f0", font_family="monospace",
@@ -161,11 +160,14 @@ def draw_static_graph(P: np.ndarray, state_names: list[str], pi_stat=None):
                            connectionstyle="arc3,rad=0.15",
                            min_source_margin=28, min_target_margin=28) # Margens ajustadas para o node maior
     
-    nx.draw_networkx_edge_labels(G, pos, ax=ax, edge_labels=edge_labels,
-                                 font_color="#c0c0ff", font_size=8,
-                                 font_family="monospace",
-                                 bbox=dict(boxstyle="round,pad=0.2",
-                                           fc="#0f0f13", ec="none", alpha=0.7))
+    nx.draw_networkx_edge_labels(
+            G, pos, ax=ax, edge_labels=edge_labels,
+            label_pos=0.3,
+            font_color="#c0c0ff", font_size=8,
+            font_family="monospace",
+            bbox=dict(boxstyle="round,pad=0.2",
+                    fc="#0f0f13", ec="none", alpha=0.7)
+    )
     ax.axis("off")
     plt.tight_layout()
     return fig
@@ -189,8 +191,6 @@ def draw_bar(values: np.ndarray, labels: list[str],
     return fig
 
 def draw_bar_horizontal(values, labels, title=""):
-    # A mágica está aqui: calcula a altura dinamicamente baseada na quantidade de barras.
-    # 0.4 polegadas por estado, com uma altura mínima de 3 polegadas.
     fig_height = max(3.0, len(labels) * 0.4)
     
     fig, ax = plt.subplots(figsize=(8, fig_height))
@@ -337,7 +337,7 @@ with left:
     spd_traj = 800
 
     if st.button("▶  Simular"):
-        # Evolução de π(t) — distribuição
+        # Evolução de π(t) -- distribuição
         dist_acc = [pi0.copy()]
         d = pi0.copy()
         for _ in range(n_steps):
@@ -375,7 +375,8 @@ with right:
     with tab_graph:
         st.markdown('<p class="lbl">grafo dirigido</p>', unsafe_allow_html=True)
         
-        # MUDANÇA: Calcular a distribuição estacionária ANTES de desenhar o grafo
+        # Calcula a distribuição estacionária antes de desenhar o grafo
+
         pi_stat = get_stationary_distribution(P)
         
         # Passar o pi_stat recém calculado para a função do grafo
@@ -423,7 +424,6 @@ with right:
             )
 
         st.markdown("&nbsp;", unsafe_allow_html=True)
-        pi_stat = get_stationary_distribution(P)
 
         if pi_stat is not None:
             st.markdown(
@@ -483,7 +483,6 @@ with right:
                         unsafe_allow_html=True)
             counts   = np.bincount(traj, minlength=n)
             emp_dist = counts / len(traj)
-            pi_stat  = get_stationary_distribution(P)
 
             if pi_stat is not None:
                 cmp_df = pd.DataFrame(
